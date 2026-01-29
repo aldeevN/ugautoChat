@@ -74,7 +74,7 @@ def rename_with_version(original_file, api_version=None):
         print(f"Using API version: {version}")
     
     # Create new filename with version
-    new_filename = f"{original_file}_{api_version}{'.ext'}"
+    new_filename = f"{original_file}_{api_version}{'.exe'}"
     
     # Skip if same name
     if original_name == new_filename:
@@ -192,7 +192,7 @@ def main():
     print("\nAttempting download with curl...")
     try:
         direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        subprocess.run(["curl", "-L", "-o", output_file, direct_url], 
+        subprocess.run(["curl", "-L", "-o", f'{output_file}.exe', direct_url], 
                       check=True, capture_output=True, text=True)
         download_success = os.path.exists(output_file) and os.path.getsize(output_file) > 0
     except Exception as e:
