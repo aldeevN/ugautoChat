@@ -187,40 +187,15 @@ def main():
     print(f"\nDownloading new version...")
     
     # Create temporary filename for download
-    temp_filename = f"{output_file}"
+    temp_filename = output_file
     
-    download_success = False
-    
-    # Method 1: Try curl first
-    print("\nAttempting download with curl...")
-    try:
-        direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        subprocess.run(["curl", "-L", "-o", temp_filename, direct_url], 
-                      check=True, capture_output=True, text=True)
-        download_success = os.path.exists(temp_filename) and os.path.getsize(temp_filename) > 0
-    except Exception as e:
-        print(f"Curl failed: {e}")
-        download_success = False
-    
-    # Method 2: Try gdown if curl failed
+    download_success = current_version in existing_file
+    print(download_success)
     if not download_success:
-        print("Curl failed, trying gdown...")
         try:
             download_success = download_with_gdown(file_id, temp_filename)
         except Exception as e:
             print(f"Gdown failed: {e}")
-            download_success = False
-    
-    # Method 3: Try wget as last resort
-    if not download_success:
-        print("Trying wget...")
-        try:
-            direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-            subprocess.run(["wget", "-O", temp_filename, direct_url], 
-                          check=True, capture_output=True, text=True)
-            download_success = os.path.exists(temp_filename) and os.path.getsize(temp_filename) > 0
-        except Exception as e:
-            print(f"Wget failed: {e}")
             download_success = False
     
     if download_success:
