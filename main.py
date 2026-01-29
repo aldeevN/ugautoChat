@@ -163,12 +163,7 @@ def main():
         # Check if it's the exact version we need
         if existing_file == final_filename:
             print("Exact version match found!")
-            user_input = input("Do you want to run it? (yes/no): ").strip().lower()
-            if user_input in ['yes', 'y', '']:
-                start_application(existing_file, api_data)
-                return
-            else:
-                print("Continuing with update...")
+            start_application(existing_file, api_data)
         else:
             print(f"Different version found. Will check for updates...")
     
@@ -192,7 +187,7 @@ def main():
     print(f"\nDownloading new version...")
     
     # Create temporary filename for download
-    temp_filename = f"{output_file}_temp.exe"
+    temp_filename = f"{output_file}"
     
     download_success = False
     
