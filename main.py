@@ -82,13 +82,35 @@ class ModernUpdateUI:
         title_container.pack(fill='x')
         
         # App Icon/Logo placeholder
-        logo_circle = tk.Frame(title_container, bg=self.colors['primary'], width=40, height=40)
-        logo_circle.pack(side='left', padx=(0, 12))
-        logo_circle.pack_propagate(False)
+        logo_frame = tk.Frame(title_container, bg=self.colors['background'], width=40, height=40)
+        logo_frame.pack(side='left', padx=(0, 12))
+        logo_frame.pack_propagate(False)
         
-        logo_text = tk.Label(logo_circle, text="UG", font=("Segoe UI", 16, "bold"), 
-                           fg='white', bg=self.colors['primary'])
-        logo_text.pack(expand=True)
+        # Create a table-style text logo based on the provided image description
+        # Since we can't use PIL reliably, we'll create a text-based representation
+        logo_text_widget = tk.Text(logo_frame, 
+                                  height=2, 
+                                  width=10,
+                                  bg=self.colors['background'],
+                                  fg=self.colors['primary'],
+                                  font=("Courier", 7, "bold"),
+                                  relief='flat',
+                                  bd=0,
+                                  wrap='none')
+        logo_text_widget.pack(expand=True)
+        
+        # Insert the table content as described
+        table_content = """StateValue
+A. B. C. D. 
+E. F. G. H. 
+I. J. K. L. 
+M. N. O. P. 
+Q. R. S. T. 
+U. V. W. X. 
+Y. Z."""
+        
+        logo_text_widget.insert('1.0', table_content)
+        logo_text_widget.config(state='disabled')  # Make it read-only
         
         title_text = tk.Label(title_container, text="UGauto Launcher", 
                             font=self.title_font, fg=self.colors['text_primary'], 
