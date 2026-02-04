@@ -27,24 +27,8 @@ class ModernUpdateUI:
         # Message queue for thread-safe UI updates
         self.message_queue = queue.Queue()
         
-        # Fonts (modern fallback order)
-        preferred_family = "Inter"
-        # Ensure font list is populated
-        try:
-            self.root.update_idletasks()
-            available_families = list(tkfont.families())
-        except Exception:
-            available_families = []
-
-        # Fallback sequence
-        fallback = ["Inter", "Segoe UI", "Arial", "Sans"]
-        family = next((f for f in fallback if f in available_families), available_families[0] if available_families else "Helvetica")
-
-        self.title_font = tkfont.Font(family=family, size=20, weight="bold")
-        self.subtitle_font = tkfont.Font(family=family, size=10)
-        self.log_font = tkfont.Font(family=("Consolas" if "Consolas" in available_families else family), size=10)
-        self.button_font = tkfont.Font(family=family, size=11, weight="normal")
-        self.status_font = tkfont.Font(family=family, size=9)
+        # Fonts setup
+        self.setup_fonts()
         
         # Colors
         self.colors = {
@@ -77,10 +61,30 @@ class ModernUpdateUI:
         
         # Bind close event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+    
+    def setup_fonts(self):
+        """Setup fonts with proper fallbacks"""
+        try:
+            self.root.update_idletasks()
+            available_families = list(tkfont.families())
+        except Exception:
+            available_families = []
+
+        # Fallback sequence
+        fallback = ["Inter", "Segoe UI", "Arial", "Sans", "Helvetica"]
+        self.font_family = next((f for f in fallback if f in available_families), 
+                               available_families[0] if available_families else "Helvetica")
+
+        # Create font objects
+        self.title_font = tkfont.Font(family=self.font_family, size=20, weight="bold")
+        self.subtitle_font = tkfont.Font(family=self.font_family, size=10)
+        self.log_font = tkfont.Font(family=("Consolas" if "Consolas" in available_families else self.font_family), size=10)
+        self.button_font = tkfont.Font(family=self.font_family, size=11, weight="normal")
+        self.status_font = tkfont.Font(family=self.font_family, size=9)
         
     def create_simple_logo_canvas(self):
         """Create a simple logo using tkinter Canvas (no external dependencies)"""
-        canvas = tk.Canvas(width=140, height=40, bg='red', 
+        canvas = tk.Canvas(width=140, height=40, bg=self.colors['background'], 
                           highlightthickness=0, bd=0)
         
         # Blue background with gradient effect
@@ -115,7 +119,7 @@ class ModernUpdateUI:
         
         # Create stylized UG text
         logo_text = tk.Label(frame, text="UG", 
-                           font=("Segoe UI", 16, "bold"), 
+                           font=(self.font_family, 16, "bold"), 
                            fg='white', bg=self.colors['primary'])
         logo_text.pack(expand=True)
         
@@ -223,7 +227,7 @@ class ModernUpdateUI:
         progress_header.pack(fill='x')
         
         progress_title = tk.Label(progress_header, text="Прогресс обновления", 
-                    font=(family, 10, "bold"), fg=self.colors['text_primary'], 
+                    font=(self.font_family, 10, "bold"), fg=self.colors['text_primary'], 
                     bg=self.colors['background'])
         progress_title.pack(side='left')
         
@@ -335,7 +339,7 @@ class ModernUpdateUI:
         
         self.quick_status_label = tk.Label(self.quick_status_frame, 
                          text="Инициализация...", 
-                         font=(family, 9),
+                         font=(self.font_family, 9),
                          fg=self.colors['text_primary'],
                          bg=self.colors['surface'],
                          wraplength=760,
@@ -600,8 +604,7 @@ class ModernUpdateUI:
         except Exception:
             pass
 
-# ... (keep all other functions the same as before: get_version_from_api, download_with_gdown,
-# get_final_filename, check_file_exists, start_application, run_updater, main, etc.)
+# ... (the rest of your functions remain the same - get_version_from_api, etc.)
 
 def get_version_from_api(ui):
     """Get current version, file_id and output_file from local API"""
