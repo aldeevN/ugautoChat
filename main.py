@@ -15,8 +15,8 @@ from pathlib import Path
 class ModernUpdateUI:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("UGauto - Application Launcher")
-        self.root.geometry("800x400")
+        self.root.title("UGauto - Запуск приложения")
+        self.root.geometry("900x480")
         
         # Configure window
         self.root.configure(bg='#ffffff')
@@ -26,12 +26,16 @@ class ModernUpdateUI:
         # Message queue for thread-safe UI updates
         self.message_queue = queue.Queue()
         
-        # Fonts
-        self.title_font = font.Font(family="Segoe UI", size=20, weight="bold")
-        self.subtitle_font = font.Font(family="Segoe UI", size=9)
-        self.log_font = font.Font(family="Consolas", size=9)
-        self.button_font = font.Font(family="Segoe UI", size=10, weight="normal")
-        self.status_font = font.Font(family="Segoe UI", size=8)
+        # Fonts (modern fallback order)
+        preferred_family = "Inter"
+        available_families = font.families()
+        family = preferred_family if preferred_family in available_families else "Segoe UI"
+
+        self.title_font = font.Font(family=family, size=20, weight="bold")
+        self.subtitle_font = font.Font(family=family, size=10)
+        self.log_font = font.Font(family="Consolas" if "Consolas" in available_families else family, size=10)
+        self.button_font = font.Font(family=family, size=11, weight="normal")
+        self.status_font = font.Font(family=family, size=9)
         
         # Colors
         self.colors = {
@@ -184,21 +188,21 @@ class ModernUpdateUI:
         logo_widget = self.create_logo_widget(title_container)
         logo_widget.pack(side='left', padx=(0, 12))
         
-        title_text = tk.Label(title_container, text="UGauto Launcher", 
-                            font=self.title_font, fg=self.colors['text_primary'], 
-                            bg=self.colors['background'])
+        title_text = tk.Label(title_container, text="UGauto", 
+                    font=self.title_font, fg=self.colors['text_primary'], 
+                    bg=self.colors['background'])
         title_text.pack(side='left')
         
         # Version badge
         version_badge = tk.Label(title_container, text="v1.0.0", 
-                               font=self.subtitle_font, fg='white', 
-                               bg=self.colors['primary_light'], padx=6, pady=1)
+                       font=self.subtitle_font, fg='white', 
+                       bg=self.colors['primary_light'], padx=8, pady=2)
         version_badge.pack(side='left', padx=(8, 0))
         
         # Subtitle
-        subtitle_label = tk.Label(header_frame, text="Smart application updater and launcher", 
-                                font=self.subtitle_font, fg=self.colors['text_secondary'], 
-                                bg=self.colors['background'])
+        subtitle_label = tk.Label(header_frame, text="Обновление и запуск приложений", 
+                    font=self.subtitle_font, fg=self.colors['text_secondary'], 
+                    bg=self.colors['background'])
         subtitle_label.pack(fill='x', pady=(3, 0))
         
         # Progress Section
@@ -209,14 +213,14 @@ class ModernUpdateUI:
         progress_header = tk.Frame(progress_frame, bg=self.colors['background'])
         progress_header.pack(fill='x')
         
-        progress_title = tk.Label(progress_header, text="Update Progress", 
-                                font=("Segoe UI", 10, "bold"), fg=self.colors['text_primary'], 
-                                bg=self.colors['background'])
+        progress_title = tk.Label(progress_header, text="Прогресс обновления", 
+                    font=(family, 10, "bold"), fg=self.colors['text_primary'], 
+                    bg=self.colors['background'])
         progress_title.pack(side='left')
         
-        self.status_text = tk.Label(progress_header, text="Initializing...", 
-                                  font=self.status_font, fg=self.colors['text_secondary'], 
-                                  bg=self.colors['background'])
+        self.status_text = tk.Label(progress_header, text="Инициализация...", 
+                      font=self.status_font, fg=self.colors['text_secondary'], 
+                      bg=self.colors['background'])
         self.status_text.pack(side='right')
         
         # Custom progress bar
@@ -237,7 +241,7 @@ class ModernUpdateUI:
         log_header.pack_propagate(False)
         
         # Toggle button for log
-        self.toggle_btn = tk.Button(log_header, text="▼ Show Log", 
+        self.toggle_btn = tk.Button(log_header, text="▼ Показать лог", 
                                   command=self.toggle_log,
                                   font=self.button_font,
                                   bg='white',
@@ -255,7 +259,7 @@ class ModernUpdateUI:
         self.log_action_frame = tk.Frame(log_header, bg=self.colors['surface'])
         
         # Clear log button
-        self.clear_btn = tk.Button(self.log_action_frame, text="Clear", 
+        self.clear_btn = tk.Button(self.log_action_frame, text="Очистить", 
                                  command=self.clear_log,
                                  font=self.button_font,
                                  bg='white',
@@ -270,7 +274,7 @@ class ModernUpdateUI:
         self.clear_btn.pack(side='left', padx=2)
         
         # Copy log button
-        self.copy_btn = tk.Button(self.log_action_frame, text="Copy", 
+        self.copy_btn = tk.Button(self.log_action_frame, text="Копировать", 
                                 command=self.copy_log,
                                 font=self.button_font,
                                 bg='white',
@@ -321,12 +325,12 @@ class ModernUpdateUI:
         self.quick_status_frame.pack_propagate(False)
         
         self.quick_status_label = tk.Label(self.quick_status_frame, 
-                                         text="Initializing...", 
-                                         font=("Segoe UI", 9),
-                                         fg=self.colors['text_primary'],
-                                         bg=self.colors['surface'],
-                                         wraplength=700,
-                                         justify='left')
+                         text="Инициализация...", 
+                         font=(family, 9),
+                         fg=self.colors['text_primary'],
+                         bg=self.colors['surface'],
+                         wraplength=760,
+                         justify='left')
         self.quick_status_label.pack(anchor='w', padx=15, pady=10)
         
         # Footer Section
@@ -339,9 +343,9 @@ class ModernUpdateUI:
         stats_frame.pack(side='left', fill='y')
         stats_frame.pack_propagate(False)
         
-        self.stats_label = tk.Label(stats_frame, text="Ready", 
-                                  font=self.status_font, fg=self.colors['text_secondary'], 
-                                  bg=self.colors['background'])
+        self.stats_label = tk.Label(stats_frame, text="Готово", 
+                      font=self.status_font, fg=self.colors['text_secondary'], 
+                      bg=self.colors['background'])
         self.stats_label.pack(anchor='w', pady=15)
         
         # Right footer - Control buttons
@@ -350,12 +354,20 @@ class ModernUpdateUI:
         self.button_frame.pack_propagate(False)
         
         # Create buttons
-        self.restart_btn = self.create_button("🔄 Restart", self.restart_updater)
-        self.manual_btn = self.create_button("📂 Folder", self.open_app_folder)
-        self.exit_btn = self.create_button("✕ Exit", self.root.quit, is_secondary=True)
+        self.restart_btn = self.create_button("🔄 Перезапустить", self.restart_updater)
+        self.manual_btn = self.create_button("📂 Папка", self.open_app_folder)
+        self.exit_btn = self.create_button("✕ Выход", self.root.quit, is_secondary=True)
         
         # Initialize progress
+        self.current_progress = 0
         self.update_progress(0)
+
+        # Bind resize for responsive adjustments
+        self.root.bind('<Configure>', self.on_resize)
+
+        # Make main container responsive
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
         
     def create_button(self, text, command, is_secondary=False):
         """Create a modern styled button with proper sizing"""
@@ -421,7 +433,7 @@ class ModernUpdateUI:
             for widget in self.log_container.winfo_children():
                 if widget != self.log_container.winfo_children()[0]:  # Keep header
                     widget.pack_forget()
-            self.toggle_btn.config(text="▼ Show Log")
+            self.toggle_btn.config(text="▼ Показать лог")
             self.log_action_frame.pack_forget()
             self.quick_status_frame.pack(fill='x', pady=(0, 15))
             self.root.geometry("800x400")  # Smaller size
@@ -430,7 +442,7 @@ class ModernUpdateUI:
             log_inner = self.log_container.winfo_children()[1] if len(self.log_container.winfo_children()) > 1 else None
             if log_inner:
                 log_inner.pack(fill='both', expand=True, padx=1, pady=(0, 1))
-            self.toggle_btn.config(text="▲ Hide Log")
+            self.toggle_btn.config(text="▲ Скрыть лог")
             self.log_action_frame.pack(side='right', padx=10)
             self.quick_status_frame.pack_forget()
             self.root.geometry("800x550")  # Larger size to show log
@@ -440,9 +452,14 @@ class ModernUpdateUI:
     
     def update_progress(self, percentage):
         """Update the progress bar width"""
+        try:
+            self.current_progress = max(0, min(100, float(percentage)))
+        except Exception:
+            self.current_progress = 0
+
         container_width = self.progress_bar.master.winfo_width()
         if container_width > 1:
-            width = int(container_width * (percentage / 100))
+            width = int(container_width * (self.current_progress / 100))
             self.progress_bar.config(width=width)
     
     def log_message(self, message, message_type="info"):
@@ -454,7 +471,8 @@ class ModernUpdateUI:
         
         # Update quick status with last important message
         if message_type in ["success", "error", "warning"]:
-            self.quick_status_label.config(text=message[:100] + "..." if len(message) > 100 else message)
+            # Show Russian-friendly short message in quick status
+            self.quick_status_label.config(text=message[:120] + "..." if len(message) > 120 else message)
     
     def check_queue(self):
         """Check for new messages in queue and update UI"""
@@ -493,14 +511,14 @@ class ModernUpdateUI:
     def clear_log(self):
         """Clear the log text area"""
         self.log_text.delete(1.0, 'end')
-        self.log_message("Log cleared", "system")
+        self.log_message("Лог очищен", "system")
     
     def copy_log(self):
         """Copy log content to clipboard"""
         log_content = self.log_text.get(1.0, 'end-1c')
         self.root.clipboard_clear()
         self.root.clipboard_append(log_content)
-        self.log_message("Log copied to clipboard", "success")
+        self.log_message("Лог скопирован в буфер обмена", "success")
     
     def show_buttons(self):
         """Show control buttons in footer with proper spacing"""
@@ -549,9 +567,9 @@ class ModernUpdateUI:
                 os.startfile(target_path)
             else:  # Linux/Mac
                 subprocess.run(['xdg-open', target_path])
-            self.log_message(f"Opened folder: {target_path}", "success")
+            self.log_message(f"Открыта папка: {target_path}", "success")
         except Exception as e:
-            self.log_message(f"Error opening folder: {e}", "error")
+            self.log_message(f"Ошибка при открытии папки: {e}", "error")
     
     def on_closing(self):
         """Handle window closing"""
@@ -564,6 +582,14 @@ class ModernUpdateUI:
         """Start the UI main loop"""
         self.update_progress(10)
         self.root.mainloop()
+
+    def on_resize(self, event):
+        """Handle resize events for responsiveness"""
+        # Update progress bar size according to current progress
+        try:
+            self.update_progress(self.current_progress)
+        except Exception:
+            pass
 
 # ... (keep all other functions the same as before: get_version_from_api, download_with_gdown,
 # get_final_filename, check_file_exists, start_application, run_updater, main, etc.)
