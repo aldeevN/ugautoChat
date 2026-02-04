@@ -6,22 +6,19 @@ import json
 import requests
 import threading
 import tkinter as tk
-from tkinter import scrolledtext, ttk, font
+from tkinter import scrolledtext, font
 import queue
+import base64
 
 class ModernUpdateUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("UGauto - Application Launcher")
-        self.root.geometry("800x400")  # Smaller initial size
+        self.root.geometry("800x400")
         
         # Configure window
         self.root.configure(bg='#ffffff')
-        
-        # Make window resizable
         self.root.resizable(True, True)
-        
-        # Set minimum size
         self.root.minsize(600, 300)
         
         # Message queue for thread-safe UI updates
@@ -36,13 +33,13 @@ class ModernUpdateUI:
         
         # Colors
         self.colors = {
-            'primary': '#2563eb',      # Blue-600
-            'primary_dark': '#1d4ed8', # Blue-700
-            'primary_light': '#3b82f6', # Blue-500
-            'secondary': '#64748b',    # Slate-500
-            'success': '#10b981',      # Emerald-500
-            'warning': '#f59e0b',      # Amber-500
-            'error': '#ef4444',        # Red-500
+            'primary': '#2563eb',
+            'primary_dark': '#1d4ed8',
+            'primary_light': '#3b82f6',
+            'secondary': '#64748b',
+            'success': '#10b981',
+            'warning': '#f59e0b',
+            'error': '#ef4444',
             'background': '#ffffff',
             'surface': '#f8fafc',
             'border': '#e2e8f0',
@@ -55,6 +52,7 @@ class ModernUpdateUI:
         
         # Flag to track if log is visible
         self.log_visible = False
+        self.app_started = False
         
         # Set up UI
         self.setup_ui()
@@ -62,12 +60,62 @@ class ModernUpdateUI:
         # Start checking messages from queue
         self.root.after(100, self.check_queue)
         
-        # Flag to track if main app started
-        self.app_started = False
-        
         # Bind close event
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+    def create_simple_logo_canvas(self):
+        """Create a simple logo using tkinter Canvas (no external dependencies)"""
+        canvas = tk.Canvas(width=140, height=40, bg='red', 
+                          highlightthickness=0, bd=0)
+        
+        # Blue background with gradient effect
+        for i in range(40):
+            color_intensity = int(17 + (100 - 17) * i / 40)
+            color = f'#{color_intensity:02x}65ae'
+            canvas.create_line(0, i, 40, i, fill=color)
+        
+        # White U shape
+        canvas.create_arc(10, 10, 30, 30, start=180, extent=180, 
+                         outline='white', width=2, style='arc')
+        canvas.create_line(10, 20, 10, 25, fill='white', width=2)
+        canvas.create_line(30, 20, 30, 25, fill='white', width=2)
+        canvas.create_line(10, 25, 30, 25, fill='white', width=2)
+        
+        # Red circle in center
+        canvas.create_oval(18, 18, 22, 22, fill='#fe0000', outline='')
+        
+        # White cross inside red circle
+        canvas.create_line(18, 20, 22, 20, fill='white', width=1)
+        canvas.create_line(20, 18, 20, 22, fill='white', width=1)
+        
+        # Outer border
+        canvas.create_rectangle(2, 2, 38, 38, outline='#1e40af', width=1)
+        
+        return canvas
+    
+    def create_text_logo(self):
+        """Create a text-based logo as fallback"""
+        frame = tk.Frame(width=40, height=40, bg=self.colors['primary'])
+        frame.pack_propagate(False)
+        
+        # Create stylized UG text
+        logo_text = tk.Label(frame, text="UG", 
+                           font=("Segoe UI", 16, "bold"), 
+                           fg='white', bg=self.colors['primary'])
+        logo_text.pack(expand=True)
+        
+        return frame
+    
+    def create_logo_widget(self, parent):
+        """Create logo widget for the header"""
+        try:
+            # Try canvas-based logo first
+            return self.create_simple_logo_canvas()
+        except Exception as e:
+            print(f"Canvas logo failed: {e}")
+            # Fallback to text logo
+            return self.create_text_logo()
+    
     def setup_ui(self):
         # Main container with padding
         main_container = tk.Frame(self.root, bg=self.colors['background'], padx=15, pady=15)
@@ -81,36 +129,9 @@ class ModernUpdateUI:
         title_container = tk.Frame(header_frame, bg=self.colors['background'])
         title_container.pack(fill='x')
         
-        # App Icon/Logo placeholder
-        logo_frame = tk.Frame(title_container, bg=self.colors['background'], width=40, height=40)
-        logo_frame.pack(side='left', padx=(0, 12))
-        logo_frame.pack_propagate(False)
-        
-        # Create a table-style text logo based on the provided image description
-        # Since we can't use PIL reliably, we'll create a text-based representation
-        logo_text_widget = tk.Text(logo_frame, 
-                                  height=2, 
-                                  width=10,
-                                  bg=self.colors['background'],
-                                  fg=self.colors['primary'],
-                                  font=("Courier", 7, "bold"),
-                                  relief='flat',
-                                  bd=0,
-                                  wrap='none')
-        logo_text_widget.pack(expand=True)
-        
-        # Insert the table content as described
-        table_content = """StateValue
-A. B. C. D. 
-E. F. G. H. 
-I. J. K. L. 
-M. N. O. P. 
-Q. R. S. T. 
-U. V. W. X. 
-Y. Z."""
-        
-        logo_text_widget.insert('1.0', table_content)
-        logo_text_widget.config(state='disabled')  # Make it read-only
+        # Add logo
+        logo_widget = self.create_logo_widget(title_container)
+        logo_widget.pack(side='left', padx=(0, 12))
         
         title_text = tk.Label(title_container, text="UGauto Launcher", 
                             font=self.title_font, fg=self.colors['text_primary'], 
@@ -217,7 +238,7 @@ Y. Z."""
         
         self.log_text = scrolledtext.ScrolledText(
             log_inner,
-            height=8,  # Smaller height
+            height=8,
             width=80,
             bg=self.colors['log_background'],
             fg=self.colors['log_text'],
@@ -233,11 +254,11 @@ Y. Z."""
         
         # Configure tags for different message types
         self.log_text.tag_config("timestamp", foreground=self.colors['text_light'])
-        self.log_text.tag_config("info", foreground='#93c5fd')  # Blue-300
+        self.log_text.tag_config("info", foreground='#93c5fd')
         self.log_text.tag_config("success", foreground=self.colors['success'])
         self.log_text.tag_config("warning", foreground=self.colors['warning'])
-        self.log_text.tag_config("error", foreground='#fca5a5')  # Red-300
-        self.log_text.tag_config("system", foreground='#cbd5e1')  # Slate-300
+        self.log_text.tag_config("error", foreground='#fca5a5')
+        self.log_text.tag_config("system", foreground='#cbd5e1')
         
         # Show log header only initially
         self.log_container.pack(fill='x', pady=(0, 15))
@@ -257,12 +278,12 @@ Y. Z."""
                                          justify='left')
         self.quick_status_label.pack(anchor='w', padx=15, pady=10)
         
-        # Footer Section - Fixed height for buttons
+        # Footer Section
         footer_frame = tk.Frame(main_container, bg=self.colors['background'], height=60)
         footer_frame.pack(fill='x', side='bottom')
         footer_frame.pack_propagate(False)
         
-        # Left footer - Stats with fixed height
+        # Left footer - Stats
         stats_frame = tk.Frame(footer_frame, bg=self.colors['background'], height=50)
         stats_frame.pack(side='left', fill='y')
         stats_frame.pack_propagate(False)
@@ -272,12 +293,12 @@ Y. Z."""
                                   bg=self.colors['background'])
         self.stats_label.pack(anchor='w', pady=15)
         
-        # Right footer - Control buttons (initially hidden) with proper sizing
+        # Right footer - Control buttons
         self.button_frame = tk.Frame(footer_frame, bg=self.colors['background'], height=50)
         self.button_frame.pack(side='right', fill='y')
         self.button_frame.pack_propagate(False)
         
-        # Create buttons with consistent sizing
+        # Create buttons
         self.restart_btn = self.create_button("🔄 Restart", self.restart_updater)
         self.manual_btn = self.create_button("📂 Folder", self.open_app_folder)
         self.exit_btn = self.create_button("✕ Exit", self.root.quit, is_secondary=True)
@@ -492,6 +513,9 @@ Y. Z."""
         """Start the UI main loop"""
         self.update_progress(10)
         self.root.mainloop()
+
+# ... (keep all other functions the same as before: get_version_from_api, download_with_gdown,
+# get_final_filename, check_file_exists, start_application, run_updater, main, etc.)
 
 def get_version_from_api(ui):
     """Get current version, file_id and output_file from local API"""
