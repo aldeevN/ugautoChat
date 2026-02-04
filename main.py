@@ -53,6 +53,9 @@ class ModernUpdateUI:
         self.log_visible = False
         self.app_started = False
         
+        # Stats label для отображения состояния
+        self.stats_label = None
+        
         # Set up UI
         self.setup_ui()
         
@@ -138,16 +141,23 @@ class ModernUpdateUI:
                     target_h = 48
                     w, h = img.size
                     if h != target_h:
+                        # Обработка для разных версий Pillow
                         try:
-                            res = Image.Resampling.LANCZOS
-                        except Exception:
+                            # Для старых версий Pillow
                             res = Image.LANCZOS if hasattr(Image, 'LANCZOS') else Image.ANTIALIAS
+                        except Exception:
+                            try:
+                                # Для новых версий Pillow (10.0.0+)
+                                res = Image.Resampling.LANCZOS
+                            except Exception:
+                                res = Image.ANTIALIAS
                         img = img.resize((int(w * (target_h / h)), target_h), res)
                     photo = ImageTk.PhotoImage(img)
                     lbl = tk.Label(parent, image=photo, bg=self.colors['background'])
                     lbl.image = photo
                     return lbl
-                except Exception:
+                except Exception as e:
+                    print(f"Error loading PNG logo: {e}")
                     # Fall back to SVG/canvas if PIL not available or load failed
                     break
 
@@ -157,7 +167,8 @@ class ModernUpdateUI:
             logo_widget = self.load_svg_logo(parent)
             if logo_widget:
                 return logo_widget
-        except Exception:
+        except Exception as e:
+            print(f"SVG logo loading failed: {e}")
             logo_widget = None
 
         # If loading failed, try canvas-based logo, then text fallback
@@ -173,7 +184,6 @@ class ModernUpdateUI:
         """
         svg_candidates = [Path.cwd() / 'main-logo.svg', Path(__file__).parent / 'main-logo.svg']
         svg_path = None
-        print(svg_path, svg_candidates)
         for p in svg_candidates:
             if p.exists():
                 svg_path = p
@@ -214,12 +224,14 @@ class ModernUpdateUI:
             if h != target_height:
                 new_w = int(w * (target_height / h))
                 
-                # Handle Pillow version differences (10.0.0+ uses Image.Resampling)
+                # Handle Pillow version differences
                 try:
-                    resample_filter = Image.Resampling.LANCZOS
+                    # Для старых версий Pillow
+                    resample_filter = Image.LANCZOS if hasattr(Image, 'LANCZOS') else Image.ANTIALIAS
                 except AttributeError:
                     try:
-                        resample_filter = Image.LANCZOS
+                        # Для новых версий Pillow (10.0.0+)
+                        resample_filter = Image.Resampling.LANCZOS
                     except AttributeError:
                         resample_filter = Image.ANTIALIAS
                 
@@ -421,6 +433,12 @@ class ModernUpdateUI:
                   font=self.status_font, fg=self.colors['success'], 
                   bg=self.colors['background'])
         self.server_status_value.pack(anchor='w', pady=12, side='left', padx=(6,0))
+        
+        # Stats label for application status (по центру)
+        self.stats_label = tk.Label(footer_frame, text="", 
+                  font=self.status_font, fg=self.colors['text_secondary'], 
+                  bg=self.colors['background'])
+        self.stats_label.pack(side='left', fill='y', padx=(20, 0), pady=12)
         
         # Right footer - Control buttons
         self.button_frame = tk.Frame(footer_frame, bg=self.colors['background'], height=50)
@@ -1081,7 +1099,7 @@ def main():
             time.sleep(2)
             
             # Update stats label
-            if process:
+            if process and ui.stats_label:
                 ui.stats_label.config(text=f"App running (PID: {process.pid})")
             
             # Set flag and close launcher completely
@@ -1093,7 +1111,8 @@ def main():
         else:
             ui.log_message("\n✗ Failed to start application", "error")
             ui.show_buttons()
-            ui.stats_label.config(text="Failed to start")
+            if ui.stats_label:
+                ui.stats_label.config(text="Failed to start")
     
     # Start updater thread
     updater_thread = threading.Thread(target=run_updater_thread)
