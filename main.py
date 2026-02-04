@@ -149,6 +149,7 @@ class ModernUpdateUI:
         """
         svg_candidates = [Path.cwd() / 'main-logo.svg', Path(__file__).parent / 'main-logo.svg']
         svg_path = None
+        print(svg_path, svg_candidates)
         for p in svg_candidates:
             if p.exists():
                 svg_path = p
@@ -188,7 +189,14 @@ class ModernUpdateUI:
             w, h = img.size
             if h != target_height:
                 new_w = int(w * (target_height / h))
-                img = img.resize((new_w, target_height), Image.LANCZOS)
+                
+                try:
+                    print(img)
+                except AttributeError:
+                    try:
+                        img = img.resize((new_w, target_height), Image.LANCZOS)
+                    except AttributeError:
+                        img = img.resize((new_w, target_height), Image.ANTIALIAS)
 
             photo = ImageTk.PhotoImage(img)
 
@@ -294,12 +302,12 @@ class ModernUpdateUI:
                                  bg='white',
                                  fg=self.colors['primary'],
                                  activebackground=self.colors['primary_light'],
-                                 activeforeground='white',
-                                 relief='flat',
-                                 bd=1,
-                                 highlightthickness=0,
-                                 padx=8,
-                                 pady=2)
+                                activeforeground='white',
+                                relief='flat',
+                                bd=1,
+                                highlightthickness=0,
+                                padx=8,
+                                pady=2)
         self.clear_btn.pack(side='left', padx=2)
         
         # Copy log button
@@ -619,8 +627,6 @@ class ModernUpdateUI:
             self.update_progress(self.current_progress)
         except Exception:
             pass
-
-# ... (the rest of your functions remain the same - get_version_from_api, etc.)
 
 def get_version_from_api(ui):
     """Get current version, file_id and output_file from local API"""
