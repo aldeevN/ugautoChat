@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import scrolledtext, font
 import queue
 import base64
+import io
+from pathlib import Path
 
 class ModernUpdateUI:
     def __init__(self):
@@ -108,13 +110,62 @@ class ModernUpdateUI:
     
     def create_logo_widget(self, parent):
         """Create logo widget for the header"""
+        # Try to load SVG logo from project (main-logo.svg) and render it if possible
+        logo_widget = None
         try:
-            # Try canvas-based logo first
+            logo_widget = self.load_svg_logo(parent)
+            if logo_widget:
+                return logo_widget
+        except Exception:
+            logo_widget = None
+
+        # If SVG loading failed, try canvas-based logo, then text fallback
+        try:
             return self.create_simple_logo_canvas()
         except Exception as e:
             print(f"Canvas logo failed: {e}")
-            # Fallback to text logo
             return self.create_text_logo()
+
+    def load_svg_logo(self, parent):
+        """Load main-logo.svg (if present) and return a Label with the rendered image.
+        Uses cairosvg + Pillow if available; otherwise returns None.
+        """
+        svg_candidates = [Path.cwd() / 'main-logo.svg', Path(__file__).parent / 'main-logo.svg']
+        svg_path = None
+        for p in svg_candidates:
+            if p.exists():
+                svg_path = p
+                break
+
+        if not svg_path:
+            return None
+
+        try:
+            # Try to import cairosvg and Pillow
+            import cairosvg
+            from PIL import Image, ImageTk
+        except Exception:
+            return None
+
+        try:
+            # Convert SVG to PNG bytes
+            png_bytes = cairosvg.svg2png(url=str(svg_path))
+            img = Image.open(io.BytesIO(png_bytes)).convert('RGBA')
+
+            # Resize to a sensible height (40px) keeping aspect ratio
+            target_height = 40
+            w, h = img.size
+            if h != target_height:
+                new_w = int(w * (target_height / h))
+                img = img.resize((new_w, target_height), Image.LANCZOS)
+
+            photo = ImageTk.PhotoImage(img)
+
+            lbl = tk.Label(parent, image=photo, bg=self.colors['background'])
+            lbl.image = photo  # keep reference
+            return lbl
+        except Exception:
+            return None
     
     def setup_ui(self):
         # Main container with padding
