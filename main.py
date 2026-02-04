@@ -190,13 +190,16 @@ class ModernUpdateUI:
             if h != target_height:
                 new_w = int(w * (target_height / h))
                 
+                # Handle Pillow version differences (10.0.0+ uses Image.Resampling)
                 try:
-                    print(img)
+                    resample_filter = Image.Resampling.LANCZOS
                 except AttributeError:
                     try:
-                        img = img.resize((new_w, target_height), Image.LANCZOS)
+                        resample_filter = Image.LANCZOS
                     except AttributeError:
-                        img = img.resize((new_w, target_height), Image.ANTIALIAS)
+                        resample_filter = Image.ANTIALIAS
+                
+                img = img.resize((new_w, target_height), resample_filter)
 
             photo = ImageTk.PhotoImage(img)
 
