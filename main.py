@@ -245,35 +245,37 @@ class ModernUpdateUI:
                     bg=self.colors['background'])
         subtitle_label.pack(fill='x', pady=(3, 0))
         
-        # Progress Section
+        # Progress Section (modern rounded progress)
         progress_frame = tk.Frame(main_container, bg=self.colors['background'])
-        progress_frame.pack(fill='x', pady=(0, 15))
-        
-        # Progress labels
+        progress_frame.pack(fill='x', pady=(0, 18))
+
+        # Progress header
         progress_header = tk.Frame(progress_frame, bg=self.colors['background'])
         progress_header.pack(fill='x')
-        
+
         progress_title = tk.Label(progress_header, text="Прогресс обновления", 
-                    font=(self.font_family, 10, "bold"), fg=self.colors['text_primary'], 
-                    bg=self.colors['background'])
+                font=(self.font_family, 10, "bold"), fg=self.colors['text_primary'], 
+                bg=self.colors['background'])
         progress_title.pack(side='left')
-        
+
         self.status_text = tk.Label(progress_header, text="Инициализация...", 
-                      font=self.status_font, fg=self.colors['text_secondary'], 
-                      bg=self.colors['background'])
+                  font=self.status_font, fg=self.colors['text_secondary'], 
+                  bg=self.colors['background'])
         self.status_text.pack(side='right')
-        
-        # Custom progress bar
-        progress_container = tk.Frame(progress_frame, height=6, bg=self.colors['border'])
-        progress_container.pack(fill='x', pady=(6, 0))
-        progress_container.pack_propagate(False)
-        
-        self.progress_bar = tk.Frame(progress_container, bg=self.colors['primary'], width=0)
-        self.progress_bar.pack(side='left', fill='y')
+
+        # Rounded progress canvas
+        progress_container = tk.Frame(progress_frame, bg=self.colors['background'])
+        progress_container.pack(fill='x', pady=(8, 0))
+
+        self.progress_canvas = tk.Canvas(progress_container, height=18, bg=self.colors['background'], highlightthickness=0)
+        self.progress_canvas.pack(fill='x')
+        self.current_progress = 0
+        # Draw background and initial foreground when canvas is ready
+        self.progress_canvas.bind('<Configure>', lambda e: (self._draw_progress_bg(), self._update_progress_fg(self.current_progress)))
         
         # Minimal Log Section (collapsible)
-        self.log_container = tk.Frame(main_container, bg=self.colors['surface'], 
-                                     relief='flat', bd=1)
+        self.log_container = tk.Frame(main_container, bg=self.colors['background'], 
+                         relief='flat', bd=0)
         
         # Log header with toggle button
         log_header = tk.Frame(self.log_container, bg=self.colors['surface'], height=30)
@@ -329,10 +331,14 @@ class ModernUpdateUI:
         self.copy_btn.pack(side='left', padx=2)
         
         # Log text area (initially hidden)
-        log_inner = tk.Frame(self.log_container, bg=self.colors['log_background'])
-        
+        log_inner = tk.Frame(self.log_container, bg=self.colors['log_background'], padx=12, pady=12)
+
+        # Add a rounded-like dark panel (approximation)
+        panel = tk.Frame(log_inner, bg=self.colors['log_background'])
+        panel.pack(fill='both', expand=True)
+
         self.log_text = scrolledtext.ScrolledText(
-            log_inner,
+            panel,
             height=8,
             width=80,
             bg=self.colors['log_background'],
@@ -360,7 +366,7 @@ class ModernUpdateUI:
         
         # Quick status display (visible when log is hidden)
         self.quick_status_frame = tk.Frame(main_container, bg=self.colors['surface'], 
-                                          height=60, relief='flat', bd=1)
+                          height=64, relief='flat', bd=1)
         self.quick_status_frame.pack(fill='x', pady=(0, 15))
         self.quick_status_frame.pack_propagate(False)
         
@@ -378,15 +384,20 @@ class ModernUpdateUI:
         footer_frame.pack(fill='x', side='bottom')
         footer_frame.pack_propagate(False)
         
-        # Left footer - Stats
+        # Left footer - Server status
         stats_frame = tk.Frame(footer_frame, bg=self.colors['background'], height=50)
         stats_frame.pack(side='left', fill='y')
         stats_frame.pack_propagate(False)
-        
-        self.stats_label = tk.Label(stats_frame, text="Готово", 
-                      font=self.status_font, fg=self.colors['text_secondary'], 
-                      bg=self.colors['background'])
-        self.stats_label.pack(anchor='w', pady=15)
+
+        self.server_status_label = tk.Label(stats_frame, text="СЕРВЕР: ", 
+                  font=self.status_font, fg=self.colors['text_secondary'], 
+                  bg=self.colors['background'])
+        self.server_status_label.pack(anchor='w', pady=12, side='left', padx=(10,0))
+
+        self.server_status_value = tk.Label(stats_frame, text="ПОДКЛЮЧЕН", 
+                  font=self.status_font, fg=self.colors['success'], 
+                  bg=self.colors['background'])
+        self.server_status_value.pack(anchor='w', pady=12, side='left', padx=(6,0))
         
         # Right footer - Control buttons
         self.button_frame = tk.Frame(footer_frame, bg=self.colors['background'], height=50)
@@ -497,10 +508,11 @@ class ModernUpdateUI:
         except Exception:
             self.current_progress = 0
 
-        container_width = self.progress_bar.master.winfo_width()
-        if container_width > 1:
-            width = int(container_width * (self.current_progress / 100))
-            self.progress_bar.config(width=width)
+        # Update canvas-based rounded progress
+        try:
+            self._update_progress_fg(self.current_progress)
+        except Exception:
+            pass
     
     def log_message(self, message, message_type="info"):
         """Add message to log text area"""
@@ -535,12 +547,8 @@ class ModernUpdateUI:
                 # Update progress based on message type
                 if msg_type == "success":
                     # Increment progress slightly for success messages
-                    current_width = self.progress_bar.winfo_width()
-                    container_width = self.progress_bar.master.winfo_width()
-                    if container_width > 0:
-                        current_percent = (current_width / container_width) * 100
-                        if current_percent < 90:
-                            self.update_progress(current_percent + 2)
+                    if self.current_progress < 90:
+                        self.update_progress(self.current_progress + 2)
                 
         except queue.Empty:
             pass
@@ -628,6 +636,53 @@ class ModernUpdateUI:
         # Update progress bar size according to current progress
         try:
             self.update_progress(self.current_progress)
+        except Exception:
+            pass
+
+    def _draw_progress_bg(self):
+        """Draw rounded background for progress canvas"""
+        try:
+            c = self.progress_canvas
+            c.delete('bg')
+            w = c.winfo_width()
+            h = int(c.winfo_height() * 0.9)
+            if w <= 10 or h <= 0:
+                return
+            radius = h // 2
+            # center vertical offset
+            y1 = (c.winfo_height() - h) // 2
+            # Draw middle rect
+            c.create_rectangle(radius, y1, w - radius, y1 + h, fill=self.colors['border'], outline='', tags='bg')
+            # Left cap
+            c.create_oval(0, y1, 2 * radius, y1 + h, fill=self.colors['border'], outline='', tags='bg')
+            # Right cap
+            c.create_oval(w - 2 * radius, y1, w, y1 + h, fill=self.colors['border'], outline='', tags='bg')
+        except Exception:
+            pass
+
+    def _update_progress_fg(self, percent: float):
+        """Draw the foreground (red) part of the progress on canvas"""
+        try:
+            c = self.progress_canvas
+            c.delete('fg')
+            w = c.winfo_width()
+            h = int(c.winfo_height() * 0.9)
+            if w <= 10 or h <= 0:
+                return
+            radius = h // 2
+            y1 = (c.winfo_height() - h) // 2
+            inner_w = max(0, int((w - 4) * (max(0, min(100, percent)) / 100)))
+            if inner_w <= 2:
+                return
+            x1 = 2
+            x2 = x1 + inner_w
+            # main rect area
+            c.create_rectangle(x1 + radius, y1, x2, y1 + h, fill=self.colors['error'], outline='', tags='fg')
+            # left cap
+            c.create_oval(x1, y1, x1 + 2 * radius, y1 + h, fill=self.colors['error'], outline='', tags='fg')
+            # right cap (clamp)
+            if x2 > x1 + radius:
+                c.create_oval(max(x1, x2 - 2 * radius), y1, x2, y1 + h, fill=self.colors['error'], outline='', tags='fg')
         except Exception:
             pass
 
