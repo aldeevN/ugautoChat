@@ -76,7 +76,7 @@ class ModernUpdateUI:
                                available_families[0] if available_families else "Helvetica")
 
         # Create font objects
-        self.title_font = tkfont.Font(family=self.font_family, size=20, weight="bold")
+        self.title_font = tkfont.Font(family=self.font_family, size=34, weight="bold")
         self.subtitle_font = tkfont.Font(family=self.font_family, size=10)
         self.log_font = tkfont.Font(family=("Consolas" if "Consolas" in available_families else self.font_family), size=10)
         self.button_font = tkfont.Font(family=self.font_family, size=11, weight="normal")
@@ -127,6 +127,30 @@ class ModernUpdateUI:
     
     def create_logo_widget(self, parent):
         """Create logo widget for the header"""
+        # Prefer a checked-in PNG if available (faster, no runtime deps)
+        png_candidates = [Path.cwd() / 'main-logo.png', Path(__file__).parent / 'main-logo.png']
+        for p in png_candidates:
+            if p.exists():
+                try:
+                    from PIL import Image, ImageTk
+                    img = Image.open(p)
+                    # scale to target height 48
+                    target_h = 48
+                    w, h = img.size
+                    if h != target_h:
+                        try:
+                            res = Image.Resampling.LANCZOS
+                        except Exception:
+                            res = Image.LANCZOS if hasattr(Image, 'LANCZOS') else Image.ANTIALIAS
+                        img = img.resize((int(w * (target_h / h)), target_h), res)
+                    photo = ImageTk.PhotoImage(img)
+                    lbl = tk.Label(parent, image=photo, bg=self.colors['background'])
+                    lbl.image = photo
+                    return lbl
+                except Exception:
+                    # Fall back to SVG/canvas if PIL not available or load failed
+                    break
+
         # Try to load SVG logo from project (main-logo.svg) and render it if possible
         logo_widget = None
         try:
@@ -136,7 +160,7 @@ class ModernUpdateUI:
         except Exception:
             logo_widget = None
 
-        # If SVG loading failed, try canvas-based logo, then text fallback
+        # If loading failed, try canvas-based logo, then text fallback
         try:
             return self.create_simple_logo_canvas()
         except Exception as e:
@@ -216,50 +240,53 @@ class ModernUpdateUI:
         main_container = tk.Frame(self.root, bg=self.colors['background'], padx=15, pady=15)
         main_container.pack(fill='both', expand=True)
         
-        # Header Section
+        # Header Section (centered)
         header_frame = tk.Frame(main_container, bg=self.colors['background'])
-        header_frame.pack(fill='x', pady=(0, 15))
-        
-        # Logo and Title
-        title_container = tk.Frame(header_frame, bg=self.colors['background'])
-        title_container.pack(fill='x')
-        
-        # Add logo
-        logo_widget = self.create_logo_widget(title_container)
-        logo_widget.pack(side='left', padx=(0, 12))
-        
-        title_text = tk.Label(title_container, text="UGauto", 
-                    font=self.title_font, fg=self.colors['text_primary'], 
-                    bg=self.colors['background'])
+        header_frame.pack(fill='x', pady=(6, 18))
+
+        # Center area for large logo and title
+        center_header = tk.Frame(header_frame, bg=self.colors['background'])
+        center_header.pack(fill='x')
+
+        # Add large centered logo
+        logo_widget = self.create_logo_widget(center_header)
+        logo_widget.pack(side='top', pady=(2, 8))
+
+        # Title and version (centered)
+        title_row = tk.Frame(center_header, bg=self.colors['background'])
+        title_row.pack(side='top')
+
+        title_text = tk.Label(title_row, text="ЮГАВТОДЕТАЛЬ", 
+                font=self.title_font, fg=self.colors['text_primary'], 
+                bg=self.colors['background'])
         title_text.pack(side='left')
-        
-        # Version badge
-        version_badge = tk.Label(title_container, text="v1.0.0", 
-                       font=self.subtitle_font, fg='white', 
-                       bg=self.colors['primary_light'], padx=8, pady=2)
-        version_badge.pack(side='left', padx=(8, 0))
-        
-        # Subtitle
-        subtitle_label = tk.Label(header_frame, text="Обновление и запуск приложений", 
-                    font=self.subtitle_font, fg=self.colors['text_secondary'], 
-                    bg=self.colors['background'])
-        subtitle_label.pack(fill='x', pady=(3, 0))
+
+        version_badge = tk.Label(title_row, text="V2.5.0", 
+                   font=self.subtitle_font, fg='white', 
+                   bg=self.colors['error'], padx=8, pady=4)
+        version_badge.pack(side='left', padx=(12, 0))
+
+        # Subtitle (centered)
+        subtitle_label = tk.Label(center_header, text="ОБНОВЛЕНИЕ И ПОДГОТОВКА КОМПОНЕНТОВ", 
+                font=(self.font_family, 12), fg=self.colors['text_light'], 
+                bg=self.colors['background'])
+        subtitle_label.pack(side='top', pady=(12, 4))
         
         # Progress Section (modern rounded progress)
         progress_frame = tk.Frame(main_container, bg=self.colors['background'])
         progress_frame.pack(fill='x', pady=(0, 18))
 
-        # Progress header
+        # Progress header (left label and right status in red)
         progress_header = tk.Frame(progress_frame, bg=self.colors['background'])
         progress_header.pack(fill='x')
 
-        progress_title = tk.Label(progress_header, text="Прогресс обновления", 
-                font=(self.font_family, 10, "bold"), fg=self.colors['text_primary'], 
+        progress_title = tk.Label(progress_header, text="ПРОГРЕСС", 
+                font=(self.font_family, 11, "bold"), fg=self.colors['text_primary'], 
                 bg=self.colors['background'])
         progress_title.pack(side='left')
 
-        self.status_text = tk.Label(progress_header, text="Инициализация...", 
-                  font=self.status_font, fg=self.colors['text_secondary'], 
+        self.status_text = tk.Label(progress_header, text="", 
+                  font=self.status_font, fg=self.colors['error'], 
                   bg=self.colors['background'])
         self.status_text.pack(side='right')
 
@@ -277,57 +304,53 @@ class ModernUpdateUI:
         self.log_container = tk.Frame(main_container, bg=self.colors['background'], 
                          relief='flat', bd=0)
         
-        # Log header with toggle button
-        log_header = tk.Frame(self.log_container, bg=self.colors['surface'], height=30)
+        # Log header with toggle button (styled)
+        log_header = tk.Frame(self.log_container, bg=self.colors['background'], height=36)
         log_header.pack(fill='x')
         log_header.pack_propagate(False)
-        
-        # Toggle button for log
-        self.toggle_btn = tk.Button(log_header, text="▼ Показать лог", 
-                                  command=self.toggle_log,
-                                  font=self.button_font,
-                                  bg='white',
-                                  fg=self.colors['primary'],
-                                  activebackground=self.colors['primary_light'],
-                                  activeforeground='white',
-                                  relief='flat',
-                                  bd=1,
-                                  highlightthickness=0,
-                                  padx=10,
-                                  pady=2)
-        self.toggle_btn.pack(side='left', padx=10)
-        
-        # Action buttons in log header (only shown when log is visible)
-        self.log_action_frame = tk.Frame(log_header, bg=self.colors['surface'])
-        
+
+        # Left caret and title
+        self.log_caret = tk.Label(log_header, text="▾", font=(self.font_family, 12), fg=self.colors['error'], bg=self.colors['background'])
+        self.log_caret.pack(side='left', padx=(6, 8))
+
+        self.log_title = tk.Label(log_header, text="ЛОГ СОБЫТИЙ", font=(self.font_family, 11, 'bold'), fg=self.colors['error'], bg=self.colors['background'])
+        self.log_title.pack(side='left')
+
+        # Right small percent placeholder
+        self.log_percent = tk.Label(log_header, text="100%", font=self.status_font, fg=self.colors['text_light'], bg=self.colors['background'])
+        self.log_percent.pack(side='right', padx=10)
+
+        # Action buttons frame (hidden by default)
+        self.log_action_frame = tk.Frame(log_header, bg=self.colors['background'])
+
         # Clear log button
         self.clear_btn = tk.Button(self.log_action_frame, text="Очистить", 
-                                 command=self.clear_log,
-                                 font=self.button_font,
-                                 bg='white',
-                                 fg=self.colors['primary'],
-                                 activebackground=self.colors['primary_light'],
-                                activeforeground='white',
-                                relief='flat',
-                                bd=1,
-                                highlightthickness=0,
-                                padx=8,
-                                pady=2)
+                     command=self.clear_log,
+                     font=self.button_font,
+                     bg='white',
+                     fg=self.colors['primary'],
+                     activebackground=self.colors['primary_light'],
+                    activeforeground='white',
+                    relief='flat',
+                    bd=1,
+                    highlightthickness=0,
+                    padx=8,
+                    pady=2)
         self.clear_btn.pack(side='left', padx=2)
-        
+
         # Copy log button
         self.copy_btn = tk.Button(self.log_action_frame, text="Копировать", 
-                                command=self.copy_log,
-                                font=self.button_font,
-                                bg='white',
-                                fg=self.colors['primary'],
-                                activebackground=self.colors['primary_light'],
-                                activeforeground='white',
-                                relief='flat',
-                                bd=1,
-                                highlightthickness=0,
-                                padx=8,
-                                pady=2)
+                    command=self.copy_log,
+                    font=self.button_font,
+                    bg='white',
+                    fg=self.colors['primary'],
+                    activebackground=self.colors['primary_light'],
+                    activeforeground='white',
+                    relief='flat',
+                    bd=1,
+                    highlightthickness=0,
+                    padx=8,
+                    pady=2)
         self.copy_btn.pack(side='left', padx=2)
         
         # Log text area (initially hidden)
@@ -413,6 +436,10 @@ class ModernUpdateUI:
         self.current_progress = 0
         self.update_progress(0)
 
+        # Footer copyright on right
+        copyright_label = tk.Label(footer_frame, text="© 2026 ЮГАВТОДЕТАЛЬ", font=self.status_font, fg=self.colors['text_light'], bg=self.colors['background'])
+        copyright_label.pack(side='right', padx=12)
+
         # Bind resize for responsive adjustments
         self.root.bind('<Configure>', self.on_resize)
 
@@ -484,7 +511,11 @@ class ModernUpdateUI:
             for widget in self.log_container.winfo_children():
                 if widget != self.log_container.winfo_children()[0]:  # Keep header
                     widget.pack_forget()
-            self.toggle_btn.config(text="▼ Показать лог")
+            # update caret
+            try:
+                self.log_caret.config(text="▾")
+            except Exception:
+                pass
             self.log_action_frame.pack_forget()
             self.quick_status_frame.pack(fill='x', pady=(0, 15))
             self.root.geometry("800x400")  # Smaller size
@@ -493,7 +524,10 @@ class ModernUpdateUI:
             log_inner = self.log_container.winfo_children()[1] if len(self.log_container.winfo_children()) > 1 else None
             if log_inner:
                 log_inner.pack(fill='both', expand=True, padx=1, pady=(0, 1))
-            self.toggle_btn.config(text="▲ Скрыть лог")
+            try:
+                self.log_caret.config(text="▴")
+            except Exception:
+                pass
             self.log_action_frame.pack(side='right', padx=10)
             self.quick_status_frame.pack_forget()
             self.root.geometry("800x550")  # Larger size to show log
