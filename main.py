@@ -155,13 +155,27 @@ class ModernUpdateUI:
                 break
 
         if not svg_path:
+            print(f"SVG logo not found in {svg_candidates}")
             return None
 
         try:
             # Try to import cairosvg and Pillow
             import cairosvg
             from PIL import Image, ImageTk
-        except Exception:
+        except ImportError:
+            # Auto-install required packages
+            try:
+                print("Installing Pillow and cairosvg for SVG logo support...")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow", "cairosvg"], 
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                import cairosvg
+                from PIL import Image, ImageTk
+                print("Pillow and cairosvg installed successfully")
+            except Exception as e:
+                print(f"Failed to install SVG support: {e}")
+                return None
+        except Exception as e:
+            print(f"Error importing SVG libraries: {e}")
             return None
 
         try:
@@ -180,8 +194,10 @@ class ModernUpdateUI:
 
             lbl = tk.Label(parent, image=photo, bg=self.colors['background'])
             lbl.image = photo  # keep reference
+            print(f"SVG logo loaded successfully from {svg_path}")
             return lbl
-        except Exception:
+        except Exception as e:
+            print(f"Error processing SVG logo: {e}")
             return None
     
     def setup_ui(self):
