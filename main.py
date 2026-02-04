@@ -6,7 +6,8 @@ import json
 import requests
 import threading
 import tkinter as tk
-from tkinter import scrolledtext, font
+from tkinter import scrolledtext
+import tkinter.font as tkfont
 import queue
 import base64
 import io
@@ -28,14 +29,22 @@ class ModernUpdateUI:
         
         # Fonts (modern fallback order)
         preferred_family = "Inter"
-        available_families = font.families()
-        family = preferred_family if preferred_family in available_families else "Segoe UI"
+        # Ensure font list is populated
+        try:
+            self.root.update_idletasks()
+            available_families = list(tkfont.families())
+        except Exception:
+            available_families = []
 
-        self.title_font = font.Font(family=family, size=20, weight="bold")
-        self.subtitle_font = font.Font(family=family, size=10)
-        self.log_font = font.Font(family="Consolas" if "Consolas" in available_families else family, size=10)
-        self.button_font = font.Font(family=family, size=11, weight="normal")
-        self.status_font = font.Font(family=family, size=9)
+        # Fallback sequence
+        fallback = ["Inter", "Segoe UI", "Arial", "Sans"]
+        family = next((f for f in fallback if f in available_families), available_families[0] if available_families else "Helvetica")
+
+        self.title_font = tkfont.Font(family=family, size=20, weight="bold")
+        self.subtitle_font = tkfont.Font(family=family, size=10)
+        self.log_font = tkfont.Font(family=("Consolas" if "Consolas" in available_families else family), size=10)
+        self.button_font = tkfont.Font(family=family, size=11, weight="normal")
+        self.status_font = tkfont.Font(family=family, size=9)
         
         # Colors
         self.colors = {
