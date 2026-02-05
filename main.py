@@ -85,48 +85,6 @@ class ModernUpdateUI:
         self.button_font = tkfont.Font(family=self.font_family, size=11, weight="normal")
         self.status_font = tkfont.Font(family=self.font_family, size=9)
         
-    def create_simple_logo_canvas(self):
-        """Create a simple logo using tkinter Canvas (no external dependencies)"""
-        canvas = tk.Canvas(width=140, height=40, bg=self.colors['background'], 
-                          highlightthickness=0, bd=0)
-        
-        # Blue background with gradient effect
-        for i in range(40):
-            color_intensity = int(17 + (100 - 17) * i / 40)
-            color = f'#{color_intensity:02x}65ae'
-            canvas.create_line(0, i, 40, i, fill=color)
-        
-        # White U shape
-        canvas.create_arc(10, 10, 30, 30, start=180, extent=180, 
-                         outline='white', width=2, style='arc')
-        canvas.create_line(10, 20, 10, 25, fill='white', width=2)
-        canvas.create_line(30, 20, 30, 25, fill='white', width=2)
-        canvas.create_line(10, 25, 30, 25, fill='white', width=2)
-        
-        # Red circle in center
-        canvas.create_oval(18, 18, 22, 22, fill='#fe0000', outline='')
-        
-        # White cross inside red circle
-        canvas.create_line(18, 20, 22, 20, fill='white', width=1)
-        canvas.create_line(20, 18, 20, 22, fill='white', width=1)
-        
-        # Outer border
-        canvas.create_rectangle(2, 2, 38, 38, outline='#1e40af', width=1)
-        
-        return canvas
-    
-    def create_text_logo(self):
-        """Create a text-based logo as fallback"""
-        frame = tk.Frame(width=40, height=40, bg=self.colors['primary'])
-        frame.pack_propagate(False)
-        
-        # Create stylized UG text
-        logo_text = tk.Label(frame, text="UG", 
-                           font=(self.font_family, 16, "bold"), 
-                           fg='white', bg=self.colors['primary'])
-        logo_text.pack(expand=True)
-        
-        return frame
     
     def create_logo_widget(self, parent):
         """Create logo widget for the header"""
@@ -170,13 +128,6 @@ class ModernUpdateUI:
         except Exception as e:
             print(f"SVG logo loading failed: {e}")
             logo_widget = None
-
-        # If loading failed, try canvas-based logo, then text fallback
-        try:
-            return self.create_simple_logo_canvas()
-        except Exception as e:
-            print(f"Canvas logo failed: {e}")
-            return self.create_text_logo()
 
     def load_svg_logo(self, parent):
         """Load main-logo.svg (if present) and return a Label with the rendered image.
@@ -260,10 +211,6 @@ class ModernUpdateUI:
         center_header = tk.Frame(header_frame, bg=self.colors['background'])
         center_header.pack(fill='x')
 
-        # Add large centered logo
-        logo_widget = self.create_logo_widget(center_header)
-        logo_widget.pack(side='top', pady=(2, 8))
-
         # Title and version (centered)
         title_row = tk.Frame(center_header, bg=self.colors['background'])
         title_row.pack(side='top')
@@ -271,9 +218,9 @@ class ModernUpdateUI:
         title_text = tk.Label(title_row, text="ЮГАВТОДЕТАЛЬ", 
                 font=self.title_font, fg=self.colors['text_primary'], 
                 bg=self.colors['background'])
-        title_text.pack(side='left')
+        title_text.pack(side='left',pady=(15, 8))
 
-        version_badge = tk.Label(title_row, text="V1.0.0", 
+        version_badge = tk.Label(title_row, text="v1.0.0", 
                    font=self.subtitle_font, fg='white', 
                    bg=self.colors['error'], padx=8, pady=4)
         version_badge.pack(side='left', padx=(12, 0))
