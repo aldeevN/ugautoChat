@@ -86,6 +86,49 @@ class ModernUpdateUI:
         self.status_font = tkfont.Font(family=self.font_family, size=9)
         
     
+    def create_logo_widget(self, parent):
+        """Create logo widget for the header"""
+        # Prefer a checked-in PNG if available (faster, no runtime deps)
+        png_candidates = [Path.cwd() / 'main-logo.png', Path(__file__).parent / 'main-logo.png']
+        for p in png_candidates:
+            if p.exists():
+                try:
+                    from PIL import Image, ImageTk
+                    img = Image.open(p)
+                    # scale to target height 48
+                    target_h = 48
+                    w, h = img.size
+                    if h != target_h:
+                        # Обработка для разных версий Pillow
+                        try:
+                            # Для старых версий Pillow
+                            res = Image.LANCZOS if hasattr(Image, 'LANCZOS') else Image.ANTIALIAS
+                        except Exception:
+                            try:
+                                # Для новых версий Pillow (10.0.0+)
+                                res = Image.Resampling.LANCZOS
+                            except Exception:
+                                res = Image.ANTIALIAS
+                        img = img.resize((int(w * (target_h / h)), target_h), res)
+                    photo = ImageTk.PhotoImage(img)
+                    lbl = tk.Label(parent, image=photo, bg=self.colors['background'])
+                    lbl.image = photo
+                    return lbl
+                except Exception as e:
+                    print(f"Error loading PNG logo: {e}")
+                    # Fall back to SVG/canvas if PIL not available or load failed
+                    break
+
+        # Try to load SVG logo from project (main-logo.svg) and render it if possible
+        logo_widget = None
+        try:
+            logo_widget = self.load_svg_logo(parent)
+            if logo_widget:
+                return logo_widget
+        except Exception as e:
+            print(f"SVG logo loading failed: {e}")
+            logo_widget = None
+
     def load_svg_logo(self, parent):
         """Load main-logo.svg (if present) and return a Label with the rendered image.
         Uses cairosvg + Pillow if available; otherwise returns None.
@@ -105,6 +148,18 @@ class ModernUpdateUI:
             # Try to import cairosvg and Pillow
             import cairosvg
             from PIL import Image, ImageTk
+        except ImportError:
+            # Auto-install required packages
+            try:
+                print("Installing Pillow and cairosvg for SVG logo support...")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow", "cairosvg"], 
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                import cairosvg
+                from PIL import Image, ImageTk
+                print("Pillow and cairosvg installed successfully")
+            except Exception as e:
+                print(f"Failed to install SVG support: {e}")
+                return None
         except Exception as e:
             print(f"Error importing SVG libraries: {e}")
             return None
@@ -155,11 +210,6 @@ class ModernUpdateUI:
         # Center area for large logo and title
         center_header = tk.Frame(header_frame, bg=self.colors['background'])
         center_header.pack(fill='x')
-
-        # Add large centered logo
-        logo_widget = self.load_svg_logo(center_header)
-        if logo_widget:
-            logo_widget.pack(side='top', pady=(2, 8))
 
         # Title and version (centered)
         title_row = tk.Frame(center_header, bg=self.colors['background'])
