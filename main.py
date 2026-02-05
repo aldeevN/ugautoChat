@@ -104,14 +104,12 @@ class ModernUpdateUI:
 
         try:
             # Try to import cairosvg and Pillow
-            import cairosvg
             from PIL import Image, ImageTk
         except Exception as e:
             print(f"Error importing SVG libraries: {e}")
             return None
 
         try:
-            # Convert SVG to PNG bytes
             img = Image.open(svg_path)
 
             # Resize to a sensible height (40px) keeping aspect ratio
