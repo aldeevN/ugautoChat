@@ -684,7 +684,7 @@ def download_with_gdown(file_id, output_file, ui):
             ui.log_message(f"Error installing gdown: {e}", "error")
             return False
     
-    url = f"https://drive.google.com/uc?id={file_id}"
+    url = f"https://drive.google.com/file/d/{file_id}"
     ui.log_message(f"Downloading from: {url}", "info")
     ui.update_progress(50)
     
@@ -723,7 +723,6 @@ def get_final_filename(output_file, version):
 def check_file_exists(output_file, version, ui):
     """Check if the specific version file already exists"""
     target_filename = get_final_filename(output_file, version)
-    
     if not target_filename:
         return None
     
