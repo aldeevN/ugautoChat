@@ -734,7 +734,8 @@ def download_with_gdown(file_id, output_file, ui):
             ui.log_message(f"Error installing gdown: {e}", "error")
             return False
     
-    url = f"https://drive.google.com/file/d/{file_id}"
+    url = f"https://drive.google.com/uc?id={file_id}"
+
     ui.log_message(f"Downloading from: {url}", "info")
     ui.update_progress(50)
     
