@@ -90,9 +90,10 @@ class ModernUpdateUI:
         """Load main-logo.svg (if present) and return a Label with the rendered image.
         Uses cairosvg + Pillow if available; otherwise returns None.
         """
-        svg_candidates = [Path.cwd() / 'main-logo.svg', Path(__file__).parent / 'main-logo.svg']
+        svg_candidates = [Path.cwd() / 'main-logo.png', Path(__file__).parent / 'main-logo.png']
         svg_path = None
         for p in svg_candidates:
+            print(svg_candidates)
             if p.exists():
                 svg_path = p
                 break
@@ -111,8 +112,7 @@ class ModernUpdateUI:
 
         try:
             # Convert SVG to PNG bytes
-            png_bytes = cairosvg.svg2png(url=str(svg_path))
-            img = Image.open(io.BytesIO(png_bytes)).convert('RGBA')
+            img = Image.open(svg_path)
 
             # Resize to a sensible height (40px) keeping aspect ratio
             target_height = 40
