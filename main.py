@@ -273,7 +273,7 @@ class ModernUpdateUI:
                 bg=self.colors['background'])
         title_text.pack(side='left')
 
-        version_badge = tk.Label(title_row, text="V2.5.0", 
+        version_badge = tk.Label(title_row, text="V1.0.0", 
                    font=self.subtitle_font, fg='white', 
                    bg=self.colors['error'], padx=8, pady=4)
         version_badge.pack(side='left', padx=(12, 0))
@@ -320,13 +320,6 @@ class ModernUpdateUI:
         log_header = tk.Frame(self.log_container, bg=self.colors['background'], height=36)
         log_header.pack(fill='x')
         log_header.pack_propagate(False)
-
-        # Left caret and title
-        self.log_caret = tk.Label(log_header, text="▾", font=(self.font_family, 12), fg=self.colors['error'], bg=self.colors['background'])
-        self.log_caret.pack(side='left', padx=(6, 8))
-
-        self.log_title = tk.Label(log_header, text="ЛОГ СОБЫТИЙ", font=(self.font_family, 11, 'bold'), fg=self.colors['error'], bg=self.colors['background'])
-        self.log_title.pack(side='left')
 
         # Right small percent placeholder
         self.log_percent = tk.Label(log_header, text="100%", font=self.status_font, fg=self.colors['text_light'], bg=self.colors['background'])
@@ -1109,10 +1102,10 @@ def main():
             ui.root.after(500, ui.close_launcher)
             
         else:
-            ui.log_message("\n✗ Failed to start application", "error")
+            ui.log_message("\n✗ Приложение не запустилось", "error")
             ui.show_buttons()
             if ui.stats_label:
-                ui.stats_label.config(text="Failed to start")
+                ui.stats_label.config(text="Ошибка запуска")
     
     # Start updater thread
     updater_thread = threading.Thread(target=run_updater_thread)
